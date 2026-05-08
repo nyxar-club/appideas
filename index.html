@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYXAR — Generador de Ideas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0f0f0f;
+    --white: #f5f0e8;
+    --gray: #1a1a1a;
+    --gray2: #2a2a2a;
+    --violet: #7C3AED;
+    --violet-light: #9d5ff5;
+    --amber: #E8811A;
+    --amber-light: #f5a045;
+    --text: #c8c0b0;
+    --text-dim: #6b6560;
+    --border: #2a2427;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.25em;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--violet);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--violet);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 12px var(--violet); }
+    50% { box-shadow: 0 0 20px var(--violet-light), 0 0 40px var(--violet); }
+  }
+
+  .logo-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* TABS NAV */
+  .tabs-nav {
+    display: flex;
+    gap: 4px;
+    background: var(--gray);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs-nav::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: var(--white); background: var(--gray2); }
+
+  .tab-btn.active {
+    background: var(--violet);
+    color: var(--white);
+    box-shadow: 0 0 16px rgba(124, 58, 237, 0.4);
+  }
+
+  /* SECTIONS */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--violet);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  /* FILTER PILLS */
+  .filters { margin-bottom: 28px; }
+  .filter-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .pill:hover { border-color: var(--amber); color: var(--amber); }
+
+  .pill.active {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: var(--black);
+    font-weight: 600;
+  }
+
+  /* IDEA CARDS */
+  .ideas-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .idea-card {
+    background: var(--gray);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .idea-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--violet);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .idea-card:hover { border-color: var(--violet); transform: translateX(3px); }
+  .idea-card:hover::before { opacity: 1; }
+
+  .card-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .tag-nicho { background: rgba(124,58,237,0.2); color: var(--violet-light); border: 1px solid rgba(124,58,237,0.3); }
+  .tag-tipo { background: rgba(232,129,26,0.15); color: var(--amber-light); border: 1px solid rgba(232,129,26,0.25); }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--violet-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 0;
+  }
+
+  .btn-link:hover { color: var(--white); }
+
+  .btn-save {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+
+  .btn-save:hover { border-color: var(--amber); color: var(--amber); }
+  .btn-save.saved { border-color: var(--amber); color: var(--amber); background: rgba(232,129,26,0.1); }
+
+  /* ESTRUCTURA MODAL */
+  .estructura-panel {
+    display: none;
+    margin-top: 14px;
+    background: #111;
+    border: 1px solid var(--violet);
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .estructura-panel.open { display: block; }
+
+  .estructura-title {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--violet-light);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .estructura-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .step {
+    display: flex;
+    gap: 14px;
+  }
+
+  .step-num {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    background: var(--violet);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+
+  .step-content {}
+
+  .step-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--amber);
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .step-example {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ACTION BUTTONS */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--violet);
+    border: none;
+    border-radius: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 20px;
+  }
+
+  .btn-primary:hover { background: var(--violet-light); box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+  }
+
+  .btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* TEXTAREA / INPUT */
+  .input-group { margin-bottom: 20px; }
+
+  .input-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  textarea, input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--gray);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 14px 16px;
+    resize: vertical;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  textarea:focus, input:focus { border-color: var(--violet); }
+  textarea::placeholder, input::placeholder { color: var(--text-dim); }
+
+  /* RESULTADO IA */
+  .ia-result {
+    background: #111;
+    border: 1px solid var(--violet);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    display: none;
+  }
+
+  .ia-result.show { display: block; }
+
+  .ia-result-title {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--violet-light);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .ia-result-content {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .loading-dots span {
+    width: 6px; height: 6px;
+    background: var(--violet);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* SAVED IDEAS */
+  .saved-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .saved-empty .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  /* API KEY MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-box {
+    background: var(--gray);
+    border: 1px solid var(--violet);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 0 60px rgba(124,58,237,0.2);
+  }
+
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    letter-spacing: 0.2em;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+
+  .modal-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .modal-link {
+    color: var(--violet-light);
+    text-decoration: underline;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--gray2); border-radius: 3px; }
+
+  /* COUNTER BADGE */
+  .counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    background: var(--amber);
+    color: var(--black);
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 0 6px;
+    margin-left: 6px;
+  }
+
+  /* COPY BTN */
+  .btn-copy {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+  }
+
+  .btn-copy:hover { border-color: var(--white); color: var(--white); }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  /* TAG select */
+  select {
+    background: var(--gray);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 12px 14px;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+
+  select:focus { border-color: var(--violet); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  @media (max-width: 500px) {
+    .row-2 { grid-template-columns: 1fr; }
+    .tabs-nav { gap: 2px; }
+    .tab-btn { min-width: 90px; font-size: 10px; padding: 9px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal-box">
+    <div class="modal-title">NYXAR × OpenAI</div>
+    <p class="modal-desc">
+      Para usar las funciones de IA (expandir ideas, analizar videos, generar ideas únicas) necesitás tu API key de OpenAI.<br><br>
+      Podés conseguirla en <a href="https://platform.openai.com/api-keys" target="_blank" class="modal-link">platform.openai.com/api-keys</a>. Se guarda localmente en tu navegador — nadie más tiene acceso.
+    </p>
+    <div class="input-group">
+      <label class="input-label">Tu API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-..." />
+    </div>
+    <button class="btn-primary" onclick="saveApiKey()">Guardar y continuar →</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      NYXAR
+    </div>
+    <div class="logo-sub">Generador de Contenido — Presencia que no pide permiso</div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('generador')">💡 Ideas</button>
+    <button class="tab-btn" onclick="switchTab('ia-ideas')">✦ IA Únicas</button>
+    <button class="tab-btn" onclick="switchTab('expandir')">↗ Expandir</button>
+    <button class="tab-btn" onclick="switchTab('analizar')">▶ Analizar</button>
+    <button class="tab-btn" onclick="switchTab('guardadas')">★ Guardadas <span class="counter" id="savedCount">0</span></button>
+    <button class="tab-btn" onclick="switchTab('ajustes')">⚙ API</button>
+  </div>
+
+  <!-- ===================== TAB: GENERADOR ===================== -->
+  <div class="section active" id="sec-generador">
+
+    <div class="filters">
+      <div class="filter-label">Nicho</div>
+      <div class="pills" id="pillsNicho">
+        <button class="pill active" data-nicho="Todos" onclick="selectPill(this,'nicho')">Todos</button>
+        <button class="pill" data-nicho="Formas de vestir" onclick="selectPill(this,'nicho')">Formas de vestir</button>
+        <button class="pill" data-nicho="Construyendo la marca" onclick="selectPill(this,'nicho')">Construyendo la marca</button>
+        <button class="pill" data-nicho="Confianza & Lifestyle" onclick="selectPill(this,'nicho')">Confianza & Lifestyle</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-label">Tipo de Contenido</div>
+      <div class="pills" id="pillsTipo">
+        <button class="pill active" data-tipo="Todos" onclick="selectPill(this,'tipo')">Todos</button>
+        <button class="pill" data-tipo="Educativo" onclick="selectPill(this,'tipo')">Educativo</button>
+        <button class="pill" data-tipo="Storytelling" onclick="selectPill(this,'tipo')">Storytelling</button>
+        <button class="pill" data-tipo="Venta" onclick="selectPill(this,'tipo')">Venta</button>
+        <button class="pill" data-tipo="Alcance" onclick="selectPill(this,'tipo')">Alcance</button>
+      </div>
+    </div>
+
+    <div class="ideas-grid" id="ideasGrid"></div>
+
+    <button class="btn-secondary" onclick="renderIdeas()" style="margin-top:20px;">↻ Generar nuevas ideas</button>
+  </div>
+
+  <!-- ===================== TAB: IA ÚNICAS ===================== -->
+  <div class="section" id="sec-ia-ideas">
+    <div class="section-title">✦ Ideas únicas con IA</div>
+
+    <div class="row-2">
+      <div class="input-group">
+        <label class="input-label">Nicho</label>
+        <select id="ia-nicho">
+          <option value="Todos">Todos</option>
+          <option value="Formas de vestir">Formas de vestir</option>
+          <option value="Construyendo la marca">Construyendo la marca</option>
+          <option value="Confianza & Lifestyle">Confianza & Lifestyle</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Tipo de contenido</label>
+        <select id="ia-tipo">
+          <option value="Todos">Todos</option>
+          <option value="Educativo">Educativo</option>
+          <option value="Storytelling">Storytelling</option>
+          <option value="Venta">Venta</option>
+          <option value="Alcance">Alcance</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Cantidad de ideas</label>
+      <select id="ia-cantidad">
+        <option value="3">3 ideas</option>
+        <option value="5" selected>5 ideas</option>
+        <option value="8">8 ideas</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Contexto adicional (opcional)</label>
+      <textarea id="ia-contexto" rows="3" placeholder="Ej: quiero hablar del lanzamiento de la colección nueva, o un video de proceso de serigrafía..."></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="generarIdeasIA()">✦ Generar con IA</button>
+
+    <div class="ia-result" id="ia-ideas-result">
+      <div class="ia-result-title">IDEAS GENERADAS</div>
+      <div class="ia-result-content" id="ia-ideas-content"></div>
+      <button class="btn-copy" onclick="copyResult('ia-ideas-content')">Copiar</button>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: EXPANDIR ===================== -->
+  <div class="section" id="sec-expandir">
+    <div class="section-title">↗ Expandir idea</div>
+
+    <div class="input-group">
+      <label class="input-label">Tu idea o gancho inicial</label>
+      <textarea id="exp-idea" rows="3" placeholder="Ej: 'nadie te enseña a elegir fit según tu contexto' o 'así empezamos Nyxar desde cero'..."></textarea>
+    </div>
+
+    <div class="row-2">
+      <div class="input-group">
+        <label class="input-label">Plataforma</label>
+        <select id="exp-plataforma">
+          <option value="TikTok">TikTok</option>
+          <option value="Instagram Reels">Instagram Reels</option>
+          <option value="Instagram Stories">Instagram Stories</option>
+          <option value="Carrusel">Carrusel</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Tipo</label>
+        <select id="exp-tipo">
+          <option value="Educativo">Educativo</option>
+          <option value="Storytelling">Storytelling</option>
+          <option value="Venta">Venta</option>
+          <option value="Alcance">Alcance</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="expandirIdea()">↗ Expandir con IA</button>
+
+    <div class="ia-result" id="exp-result">
+      <div class="ia-result-title">IDEA EXPANDIDA + GUIÓN</div>
+      <div class="ia-result-content" id="exp-content"></div>
+      <button class="btn-copy" onclick="copyResult('exp-content')">Copiar guión</button>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: ANALIZAR ===================== -->
+  <div class="section" id="sec-analizar">
+    <div class="section-title">▶ Analizar video / guión</div>
+
+    <div class="input-group">
+      <label class="input-label">Pegá el guión o transcripción del video que funcionó</label>
+      <textarea id="anal-guion" rows="6" placeholder="Pegá acá el guión completo, transcripción o descripción del video que tuvo buenos resultados..."></textarea>
+    </div>
+
+    <div class="row-2">
+      <div class="input-group">
+        <label class="input-label">Nicho Nyxar</label>
+        <select id="anal-nicho">
+          <option value="Formas de vestir">Formas de vestir</option>
+          <option value="Construyendo la marca">Construyendo la marca</option>
+          <option value="Confianza & Lifestyle">Confianza & Lifestyle</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Plataforma destino</label>
+        <select id="anal-plataforma">
+          <option value="TikTok">TikTok</option>
+          <option value="Instagram Reels">Instagram Reels</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="analizarVideo()">▶ Analizar y adaptar</button>
+
+    <div class="ia-result" id="anal-result">
+      <div class="ia-result-title">ANÁLISIS + ADAPTACIÓN NYXAR</div>
+      <div class="ia-result-content" id="anal-content"></div>
+      <button class="btn-copy" onclick="copyResult('anal-content')">Copiar adaptación</button>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: GUARDADAS ===================== -->
+  <div class="section" id="sec-guardadas">
+    <div class="section-title">★ Ideas guardadas</div>
+    <div id="savedIdeasContainer">
+      <div class="saved-empty">
+        <div class="icon">◈</div>
+        Todavía no guardaste ninguna idea.<br>Explorá el generador y presioná + Guardar.
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="clearSaved()" style="margin-top:20px;">Borrar todas</button>
+  </div>
+
+  <!-- ===================== TAB: AJUSTES ===================== -->
+  <div class="section" id="sec-ajustes">
+    <div class="section-title">⚙ Configuración API</div>
+    <div class="input-group">
+      <label class="input-label">OpenAI API Key</label>
+      <input type="password" id="ajustesKey" placeholder="sk-..." />
+    </div>
+    <p style="font-size:12px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+      Tu key se guarda solo en este navegador (localStorage). Nunca se envía a ningún servidor externo. Usamos el modelo <strong style="color:var(--violet-light)">gpt-4o-mini</strong> para mantener costos mínimos.
+    </p>
+    <button class="btn-primary" onclick="updateApiKey()">Guardar key</button>
+    <button class="btn-secondary" onclick="deleteApiKey()">Eliminar key</button>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ==================== DATA ====================
+const IDEAS_BASE = [
+  // FORMAS DE VESTIR — EDUCATIVO
+  { nicho:"Formas de vestir", tipo:"Educativo", titulo:"3 fits que funcionan igual en la universidad y en la calle", desc:"Oversize, corte clean, accesorios que elevan. Sin cambiar nada.", estructura:[
+    {nombre:"HOOK",ejemplo:"'¿Qué usás cuando no sabés qué ponerte?' — Empieza con una pregunta que duele."},
+    {nombre:"PROBLEMA",ejemplo:"'Tenés dos versiones de vos mismo y las dos se sienten falsas.' — Nombra la incomodidad real."},
+    {nombre:"3 OPCIONES CONCRETAS",ejemplo:"Fit 1: camiseta Nyxar oversize + cargos + chunky shoes. Fit 2: boxy fit + jeans slim + gorro. Fit 3: tee regular + trench + botas. Mostrá cada uno en transición rápida."},
+    {nombre:"CTA",ejemplo:"'El que te funciona en los dos mundos es el que se siente tuyo. Nyxar te da esa base.' — Link en bio."}
+  ]},
+  { nicho:"Formas de vestir", tipo:"Educativo", titulo:"Por qué el oversize no es para todos (y cómo saber si es para vos)", desc:"Proporciones, altura, estructura. Lo que nadie te dice.", estructura:[
+    {nombre:"HOOK",ejemplo:"'El oversize se ve diferente en cada persona y hay una razón.' — Abre curiosidad."},
+    {nombre:"EXPLICACIÓN VISUAL",ejemplo:"Mostrá el mismo diseño en corte regular vs oversize en cuerpo. 'El oversize amplía, cae diferente, cambia la silueta entera.'"},
+    {nombre:"REGLAS SIMPLES",ejemplo:"Alta → oversize funciona casi siempre. Baja → boxy corto mejor que oversize largo. Ancho → regular fitted define mejor. Mostrate a vos mismo con cada versión."},
+    {nombre:"CIERRE",ejemplo:"'En Nyxar tenemos los tres cortes. Tu cuerpo ya sabe cuál es el tuyo.'"}
+  ]},
+  { nicho:"Formas de vestir", tipo:"Alcance", titulo:"El error que arruina cualquier outfit (aunque la ropa sea buena)", desc:"Talla incorrecta. El fit lo hace todo.", estructura:[
+    {nombre:"HOOK POLÉMICO",ejemplo:"'Gastaste $100 en ropa y te ves igual que con la de $15. El problema no es la ropa.'"},
+    {nombre:"REVEAL",ejemplo:"'Es el talle. Siempre fue el talle.' — Pausa dramática, corte."},
+    {nombre:"DEMOSTRACIÓN",ejemplo:"Mismo modelo, misma camiseta en talle XS vs L vs XL boxy. La diferencia visual habla sola."},
+    {nombre:"GANCHO NYXAR",ejemplo:"'Por eso en Nyxar los cortes están diseñados para que cada uno tenga su intención. No es oversize al azar.'"}
+  ]},
+  { nicho:"Formas de vestir", tipo:"Educativo", titulo:"Cómo construir presencia antes de abrir la boca", desc:"El fit habla primero. Lo que proyectás antes de presentarte.", estructura:[
+    {nombre:"HOOK",ejemplo:"'Antes de decir una palabra, ya te leyeron.' — Directo, sin intro."},
+    {nombre:"DESARROLLO",ejemplo:"Explica los 3 elementos que la gente nota antes que el rostro: silueta, colores, coherencia. 'Tu ropa es tu narrativa visual.'"},
+    {nombre:"EJEMPLO REAL",ejemplo:"'Nyxar nace de esto — prendas que comunican sin necesitar explicación.' Mostrá looks completos."},
+    {nombre:"CTA",ejemplo:"'¿Qué dice tu ropa cuando entrás a un cuarto?' — Pregunta en comentarios."}
+  ]},
+  // FORMAS DE VESTIR — STORYTELLING
+  { nicho:"Formas de vestir", tipo:"Storytelling", titulo:"La vez que me fui a una reunión en streetwear y ganamos el contrato", desc:"Presencia > dress code. Historia real de Williams.", estructura:[
+    {nombre:"ESCENA",ejemplo:"'Era una sala con tres tipos en traje y yo con mi Nyxar oversize y cargos.' — Pintá el cuadro."},
+    {nombre:"TENSIÓN",ejemplo:"'Me miraron diferente. Lo noté. Seguí igual.' — La incomodidad como poder."},
+    {nombre:"GIRO",ejemplo:"'Al final del meeting, uno me preguntó dónde conseguía la ropa.' — El giro humano."},
+    {nombre:"REFLEXIÓN",ejemplo:"'La seguridad no viene del traje. Viene de saber quién sos y vestirlo sin disculpas.'"},
+    {nombre:"CIERRE NYXAR",ejemplo:"'Eso construimos en Nyxar. No ropa para encajar — ropa para que no tengas que hacerlo.'"}
+  ]},
+  // CONSTRUYENDO LA MARCA — EDUCATIVO
+  { nicho:"Construyendo la marca", tipo:"Educativo", titulo:"Cómo nació Nyxar: el proceso real, sin romantizarlo", desc:"De la idea al primer producto. Decisiones, errores, aprendizajes.", estructura:[
+    {nombre:"HOOK",ejemplo:"'La mayoría te muestra el resultado. Yo te voy a mostrar el quilombo de llegar ahí.' — Honestidad como hook."},
+    {nombre:"ORIGEN",ejemplo:"'Nyx, diosa griega de la noche. Poder silencioso. Eso era lo que quería que la marca dijera.' Explica la nomenclatura de forma corta."},
+    {nombre:"LOS ERRORES",ejemplo:"'El primer diseño estaba mal. La tela era equivocada. El precio no tenía sentido.' — Nombra al menos 2 errores reales."},
+    {nombre:"APRENDIZAJE",ejemplo:"'Cada error me definió más la marca que los aciertos.' — La reflexión que conecta."},
+    {nombre:"PRESENTE",ejemplo:"'Hoy Nyxar existe porque decidí que no iba a ser perfecta al principio — iba a ser real.'"}
+  ]},
+  { nicho:"Construyendo la marca", tipo:"Storytelling", titulo:"Por qué elegí hacer una marca de ropa sin plata ni contactos", desc:"Decisión, miedo, claridad. El punto de partida real.", estructura:[
+    {nombre:"HOOK",ejemplo:"'Todo el mundo tiene una excusa para no empezar. Yo también las tenía.' — Vulnerabilidad calculada."},
+    {nombre:"CONTEXTO",ejemplo:"'No tenía capital inicial, no tenía proveedores, no tenía nada más que una idea y la convicción de que tenía que existir.' — Real, sin exagerar."},
+    {nombre:"MOMENTO DECISIVO",ejemplo:"'Hubo un día que dije: o empiezo con lo que hay, o no empiezo nunca.' — El turning point."},
+    {nombre:"REFLEXIÓN",ejemplo:"'Nyxar no es exitosa por los recursos. Es porque la identidad estaba clara desde el día 1.'"},
+    {nombre:"INVITACIÓN",ejemplo:"'Si tenés una idea y estás esperando el momento perfecto — esto es para vos.'"}
+  ]},
+  { nicho:"Construyendo la marca", tipo:"Educativo", titulo:"Todo lo que probé antes de encontrar el proveedor correcto", desc:"Calidad, precio, confianza. El proceso de selección de producción.", estructura:[
+    {nombre:"HOOK",ejemplo:"'¿Cuántos mensajes sin respuesta antes de encontrar al proveedor correcto? Te cuento.' — Pregunta + promesa."},
+    {nombre:"PROCESO",ejemplo:"Nombra 3-4 criterios que usaste: calidad de tela, acabado en cuello y mangas, tiempo de entrega, comunicación. Mostrá una prenda con mala calidad vs una buena."},
+    {nombre:"ERRORES COSTOSOS",ejemplo:"'Ordené 20 piezas de una tela que se encogía. Perdí ese dinero.' — Número concreto, pérdida real."},
+    {nombre:"RESULTADO",ejemplo:"'Hoy el algodón de Nyxar tiene peso, caída y textura pensados.' — Habla del producto actual."},
+    {nombre:"CTA",ejemplo:"'Si vas a lanzar tu propia marca, el proveedor es la decisión más importante que vas a tomar.'"}
+  ]},
+  { nicho:"Construyendo la marca", tipo:"Alcance", titulo:"Construí una marca de ropa desde cero con menos de $500", desc:"Proceso real. Números reales. Sin filtros.", estructura:[
+    {nombre:"HOOK NÚMERO",ejemplo:"'$500. Eso fue todo lo que usé para arrancar Nyxar.' — El número como anzuelo."},
+    {nombre:"DESGLOSE",ejemplo:"'$200 en primera producción, $80 en diseño, $100 en branding básico, $120 en contenido.' — Detalle creíble."},
+    {nombre:"LO QUE NO HARÍA",ejemplo:"'No gastaría en local. No gastaría en publicidad todavía. Todo en producto e identidad.' — Consejo específico."},
+    {nombre:"CTA",ejemplo:"'¿Querés arrancar tu propia marca? Dejame un comentario y te digo por dónde empezar.'"}
+  ]},
+  // CONFIANZA & LIFESTYLE — EDUCATIVO
+  { nicho:"Confianza & Lifestyle", tipo:"Educativo", titulo:"Cómo vestís cuando ya no necesitás aprobación externa", desc:"El momento en que el estilo deja de ser ansiedad y se vuelve expresión.", estructura:[
+    {nombre:"HOOK",ejemplo:"'Hay un momento exacto en que dejás de vestirte para otros.' — Declaración que invita a identificarse."},
+    {nombre:"ANTES",ejemplo:"'Antes me preguntaba qué iba a pensar la gente. Ahora me pregunto qué quiero decir.' — La transformación personal."},
+    {nombre:"SEÑALES",ejemplo:"'Sabés que llegaste ahí cuando: no buscás validación en los comentarios, comprás sin consultar, te ponés algo raro y te sentís igual.' — Lista visual rápida."},
+    {nombre:"NYXAR COMO PUNTO",ejemplo:"'Nyxar existe para ese punto. Para los que ya llegaron o están llegando.' — Posicionamiento sin forzar venta."}
+  ]},
+  { nicho:"Confianza & Lifestyle", tipo:"Alcance", titulo:"Por qué la gente que viste bien nunca explica qué tiene puesto", desc:"Presencia sin necesidad de validación.", estructura:[
+    {nombre:"OBSERVACIÓN",ejemplo:"'¿Notaste que las personas con más estilo nunca te dicen 'esto es de aquí' o 'esto costó esto'?' — Observación compartida."},
+    {nombre:"EL PORQUÉ",ejemplo:"'Porque el estilo real no necesita contexto. Habla solo.' — Frase memorable, buen corte para TikTok."},
+    {nombre:"LA TRAMPA",ejemplo:"'Los que más explican su ropa son los que menos seguros están.' — Provocador pero verdadero."},
+    {nombre:"NYXAR",ejemplo:"'Construimos prendas que no necesitan explicación. Como la gente que las usa.'"}
+  ]},
+  { nicho:"Confianza & Lifestyle", tipo:"Storytelling", titulo:"El día que entré a un lugar 'exclusivo' con streetwear y no me importó nada", desc:"Presencia que no pide permiso. Historia real de Williams.", estructura:[
+    {nombre:"ESCENA",ejemplo:"'Puerta de un rooftop. Dress code implícito. Yo con camiseta Nyxar y pantalón cargo.' — Pinta el cuadro rápido."},
+    {nombre:"TENSIÓN",ejemplo:"'El portero me midió de arriba abajo. Yo lo miré igual.' — El conflicto."},
+    {nombre:"RESULTADO",ejemplo:"'Entré. No sé si fue la actitud o el outfit. Probablemente los dos.' — Ambigüedad honesta."},
+    {nombre:"MORALEJA",ejemplo:"'La exclusividad no es el lugar. Sos vos.' — La línea que se guarda."},
+    {nombre:"NYXAR",ejemplo:"'Nyxar no es para todos los lugares. Es para toda la gente que no necesita que le digan que puede estar en cualquier lado.'"}
+  ]},
+  { nicho:"Confianza & Lifestyle", tipo:"Venta", titulo:"Esta camiseta se vendió antes de publicarla", desc:"Demanda real. Porqué la gente la quería sin verla todavía.", estructura:[
+    {nombre:"HOOK",ejemplo:"'Antes de publicar el lanzamiento, ya tenía mensajes preguntando cuándo salía. Así fue.' — Social proof desde el inicio."},
+    {nombre:"PROCESO",ejemplo:"'Mostré el diseño en Stories. Sin precio, sin link. Solo el diseño.' — Describe el proceso exacto."},
+    {nombre:"REACCIÓN",ejemplo:"'Los mensajes llegaron solos. Eso me dijo todo lo que necesitaba saber sobre si la gente la quería.' — Prueba emocional."},
+    {nombre:"PRODUCTO",ejemplo:"Mostrá la camiseta real. Detalles del corte, peso de tela, gráfico. '$25. Link en bio.'"},
+    {nombre:"URGENCIA",ejemplo:"'Producción limitada. Cuando se acaba, se acaba.'"}
+  ]},
+  // VENTA
+  { nicho:"Formas de vestir", tipo:"Venta", titulo:"La camiseta que funciona en 5 contextos diferentes", desc:"Versatilidad real. Uno compra, cinco usos.", estructura:[
+    {nombre:"HOOK",ejemplo:"'Una camiseta. 5 maneras de usarla sin repetirte.' — Promesa concreta."},
+    {nombre:"5 LOOKS",ejemplo:"1) Gym fit minimalista. 2) Streetwear con cargos. 3) Layering con flanela. 4) Evento casual con slacks. 5) Aeropuerto/viaje. Cada uno en 3-4 segundos."},
+    {nombre:"CALIDAD",ejemplo:"'Algodón premium que aguanta el uso real. Sin que se estire, sin que pierda forma.' — Una frase, nada más."},
+    {nombre:"CTA",ejemplo:"'$25. Link en bio. Si se te ocurre un 6to look, comentalo.' — CTA + engagement."}
+  ]},
+];
+
+// ==================== STATE ====================
+let filtroNicho = "Todos";
+let filtroTipo = "Todos";
+let savedIdeas = JSON.parse(localStorage.getItem('nyxar_saved') || '[]');
+
+// ==================== API KEY ====================
+function getApiKey() {
+  return localStorage.getItem('nyxar_openai_key') || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-')) {
+    alert('Ingresá una key válida (empieza con sk-)');
+    return;
+  }
+  localStorage.setItem('nyxar_openai_key', key);
+  document.getElementById('apiModal').style.display = 'none';
+}
+
+function updateApiKey() {
+  const key = document.getElementById('ajustesKey').value.trim();
+  if (!key.startsWith('sk-')) { alert('Key inválida'); return; }
+  localStorage.setItem('nyxar_openai_key', key);
+  alert('✓ Key actualizada');
+}
+
+function deleteApiKey() {
+  if (confirm('¿Eliminar la API key?')) {
+    localStorage.removeItem('nyxar_openai_key');
+    document.getElementById('ajustesKey').value = '';
+    alert('Key eliminada');
+  }
+}
+
+// Init modal
+window.addEventListener('DOMContentLoaded', () => {
+  if (!getApiKey()) {
+    document.getElementById('apiModal').style.display = 'flex';
+  } else {
+    document.getElementById('apiModal').style.display = 'none';
+    document.getElementById('ajustesKey').value = getApiKey();
+  }
+  renderIdeas();
+  renderSaved();
+});
+
+// ==================== TABS ====================
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ==================== PILLS ====================
+function selectPill(el, type) {
+  const container = type === 'nicho' ? 'pillsNicho' : 'pillsTipo';
+  document.querySelectorAll(`#${container} .pill`).forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  if (type === 'nicho') filtroNicho = el.dataset.nicho;
+  else filtroTipo = el.dataset.tipo;
+  renderIdeas();
+}
+
+// ==================== RENDER IDEAS ====================
+function renderIdeas() {
+  let pool = IDEAS_BASE.filter(i => {
+    const matchN = filtroNicho === 'Todos' || i.nicho === filtroNicho;
+    const matchT = filtroTipo === 'Todos' || i.tipo === filtroTipo;
+    return matchN && matchT;
+  });
+
+  // shuffle
+  pool = pool.sort(() => Math.random() - 0.5).slice(0, 6);
+
+  const grid = document.getElementById('ideasGrid');
+  grid.innerHTML = '';
+
+  if (pool.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:40px;">No hay ideas para esta combinación.</p>';
+    return;
+  }
+
+  pool.forEach((idea, idx) => {
+    const id = 'card-' + idx;
+    const estrId = 'estr-' + idx;
+    const isSaved = savedIdeas.some(s => s.titulo === idea.titulo);
+
+    const stepsHTML = idea.estructura.map((s, i) => `
+      <div class="step">
+        <div class="step-num">${i+1}</div>
+        <div class="step-content">
+          <div class="step-name">${s.nombre}</div>
+          <div class="step-example">${s.ejemplo}</div>
+        </div>
+      </div>
+    `).join('');
+
+    grid.innerHTML += `
+      <div class="idea-card" id="${id}">
+        <div class="card-tags">
+          <span class="tag tag-nicho">${idea.nicho}</span>
+          <span class="tag tag-tipo">${idea.tipo}</span>
+        </div>
+        <div class="card-title">${idea.titulo}</div>
+        <div class="card-desc">${idea.desc}</div>
+        <div class="card-actions">
+          <button class="btn-link" onclick="toggleEstructura('${estrId}', this)">Ver estructura ▾</button>
+          <button class="btn-save ${isSaved?'saved':''}" id="save-${idx}" onclick="toggleSave(${JSON.stringify(idea).replace(/"/g,'&quot;')}, 'save-${idx}')">
+            ${isSaved ? '★ Guardada' : '+ Guardar'}
+          </button>
+        </div>
+        <div class="estructura-panel" id="${estrId}">
+          <div class="estructura-title">Estructura sugerida + Guión</div>
+          <div class="estructura-steps">${stepsHTML}</div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function toggleEstructura(id, btn) {
+  const panel = document.getElementById(id);
+  panel.classList.toggle('open');
+  btn.textContent = panel.classList.contains('open') ? 'Ocultar ▴' : 'Ver estructura ▾';
+}
+
+// ==================== SAVED ====================
+function toggleSave(idea, btnId) {
+  const btn = document.getElementById(btnId);
+  const exists = savedIdeas.findIndex(s => s.titulo === idea.titulo);
+  if (exists >= 0) {
+    savedIdeas.splice(exists, 1);
+    btn.textContent = '+ Guardar';
+    btn.classList.remove('saved');
+  } else {
+    savedIdeas.push(idea);
+    btn.textContent = '★ Guardada';
+    btn.classList.add('saved');
+  }
+  localStorage.setItem('nyxar_saved', JSON.stringify(savedIdeas));
+  document.getElementById('savedCount').textContent = savedIdeas.length;
+  renderSaved();
+}
+
+function renderSaved() {
+  document.getElementById('savedCount').textContent = savedIdeas.length;
+  const container = document.getElementById('savedIdeasContainer');
+
+  if (savedIdeas.length === 0) {
+    container.innerHTML = '<div class="saved-empty"><div class="icon">◈</div>Todavía no guardaste ninguna idea.<br>Explorá el generador y presioná + Guardar.</div>';
+    return;
+  }
+
+  container.innerHTML = savedIdeas.map((idea, idx) => {
+    const stepsHTML = (idea.estructura||[]).map((s, i) => `
+      <div class="step">
+        <div class="step-num">${i+1}</div>
+        <div class="step-content">
+          <div class="step-name">${s.nombre}</div>
+          <div class="step-example">${s.ejemplo}</div>
+        </div>
+      </div>
+    `).join('');
+
+    const eId = 'saved-estr-' + idx;
+    return `
+      <div class="idea-card">
+        <div class="card-tags">
+          <span class="tag tag-nicho">${idea.nicho||''}</span>
+          <span class="tag tag-tipo">${idea.tipo||''}</span>
+        </div>
+        <div class="card-title">${idea.titulo}</div>
+        <div class="card-desc">${idea.desc||''}</div>
+        <div class="card-actions">
+          <button class="btn-link" onclick="toggleEstructura('${eId}', this)">Ver estructura ▾</button>
+          <button class="btn-save saved" onclick="removeSaved(${idx})">★ Guardada</button>
+        </div>
+        <div class="estructura-panel" id="${eId}">
+          <div class="estructura-title">Estructura + Guión</div>
+          <div class="estructura-steps">${stepsHTML}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function removeSaved(idx) {
+  savedIdeas.splice(idx, 1);
+  localStorage.setItem('nyxar_saved', JSON.stringify(savedIdeas));
+  renderSaved();
+  document.getElementById('savedCount').textContent = savedIdeas.length;
+}
+
+function clearSaved() {
+  if (confirm('¿Borrar todas las ideas guardadas?')) {
+    savedIdeas = [];
+    localStorage.setItem('nyxar_saved', JSON.stringify(savedIdeas));
+    renderSaved();
+    document.getElementById('savedCount').textContent = 0;
+  }
+}
+
+// ==================== OPENAI CALL ====================
+async function callOpenAI(systemPrompt, userPrompt) {
+  const key = getApiKey();
+  if (!key) {
+    alert('Agregá tu API key en la pestaña ⚙ API');
+    return null;
+  }
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${key}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 1800,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || 'Error en la API');
+  }
+
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+const NYXAR_SYSTEM = `Eres el generador de contenido de NYXAR, una marca de streetwear premium accesible fundada por Williams.
+
+IDENTIDAD:
+- Nyxar viene de Nyx, diosa griega de la noche. Poder silencioso, misterio, fuerza sin validación.
+- No vende ropa — vende presencia.
+- Streetwear premium accesible, unisex, 18-30 años, urbano.
+- No compite con fast fashion ni quiere ser Supreme. Tiene su propio espacio.
+
+VOZ (Williams):
+- Directo. Sin rodeos. Boom, al punto.
+- Humorístico y espontáneo. Se ríe de lo obvio que nadie dice.
+- Usa: fuck, imagínate, puya, ¿no?, sabiendo
+- Trata de vos/tú, nunca de usted
+- Fórmula: Situación real que duele → incomodidad que hace pensar → Nyxar como conclusión natural
+
+NICHOS:
+1. Formas de vestir — fit, corte, accesorio, detalle, proporciones
+2. Construyendo la marca — proceso, errores, decisiones, narrativa
+3. Confianza & Lifestyle — identidad, presencia, actitud, streetwear como forma de ser
+
+PRODUCTOS:
+- Camisetas en corte Regular, Oversize, Boxy fit
+- Algodón premium, $25 USD
+- Gráficos con intención, no decoración
+
+Respondé siempre en español (El Salvador / América Central) con la voz de Williams.`;
+
+// ==================== IA IDEAS ====================
+async function generarIdeasIA() {
+  const nicho = document.getElementById('ia-nicho').value;
+  const tipo = document.getElementById('ia-tipo').value;
+  const cantidad = document.getElementById('ia-cantidad').value;
+  const contexto = document.getElementById('ia-contexto').value;
+
+  const result = document.getElementById('ia-ideas-result');
+  const content = document.getElementById('ia-ideas-content');
+  result.classList.add('show');
+  content.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  const prompt = `Generame ${cantidad} ideas de contenido para redes sociales de Nyxar.
+
+Nicho: ${nicho}
+Tipo de contenido: ${tipo}
+Contexto adicional: ${contexto || 'ninguno'}
+
+Para cada idea incluí:
+1. TÍTULO GANCHO (la primera frase que aparece en el video)
+2. DESCRIPCIÓN breve (qué trata el video)
+3. ESTRUCTURA con pasos: nombre del paso + ejemplo concreto de cómo guionizarlo con la voz de Williams
+
+Formato claro, separado entre ideas. Usá la voz de Williams — directa, honesta, con actitud.`;
+
+  try {
+    const resp = await callOpenAI(NYXAR_SYSTEM, prompt);
+    content.textContent = resp;
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ==================== EXPANDIR ====================
+async function expandirIdea() {
+  const idea = document.getElementById('exp-idea').value.trim();
+  const plataforma = document.getElementById('exp-plataforma').value;
+  const tipo = document.getElementById('exp-tipo').value;
+
+  if (!idea) { alert('Escribí tu idea o gancho primero'); return; }
+
+  const result = document.getElementById('exp-result');
+  const content = document.getElementById('exp-content');
+  result.classList.add('show');
+  content.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  const prompt = `Tengo esta idea o gancho inicial para un video de Nyxar:
+
+"${idea}"
+
+Plataforma: ${plataforma}
+Tipo de contenido: ${tipo}
+
+Necesito:
+1. GANCHO PULIDO (reescribí la primera frase para que pare el scroll)
+2. GUIÓN COMPLETO paso a paso con lo que digo en cada segundo/momento del video
+3. LLAMADA A LA ACCIÓN al final
+4. TEXTO para el caption de la publicación
+5. 3-5 HASHTAGS relevantes
+
+Escribí con la voz directa de Williams. Que suene real, no corporativo.`;
+
+  try {
+    const resp = await callOpenAI(NYXAR_SYSTEM, prompt);
+    content.textContent = resp;
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ==================== ANALIZAR ====================
+async function analizarVideo() {
+  const guion = document.getElementById('anal-guion').value.trim();
+  const nicho = document.getElementById('anal-nicho').value;
+  const plataforma = document.getElementById('anal-plataforma').value;
+
+  if (!guion) { alert('Pegá el guión del video a analizar'); return; }
+
+  const result = document.getElementById('anal-result');
+  const content = document.getElementById('anal-content');
+  result.classList.add('show');
+  content.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  const prompt = `Acá está el guión/transcripción de un video que funcionó bien en redes:
+
+---
+${guion}
+---
+
+Nicho donde quiero adaptarlo: ${nicho}
+Plataforma destino: ${plataforma}
+
+Necesito:
+1. ANÁLISIS: por qué funcionó este video (estructura, gancho, emoción, ritmo)
+2. ELEMENTOS CLAVE que lo hicieron viral o efectivo
+3. ADAPTACIÓN COMPLETA para Nyxar: reescribí el guión completo adaptado a la identidad de la marca, el nicho elegido y la voz de Williams
+4. DIFERENCIAS clave entre el original y la adaptación
+
+Sé específico. No generalices.`;
+
+  try {
+    const resp = await callOpenAI(NYXAR_SYSTEM, prompt);
+    content.textContent = resp;
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ==================== UTILS ====================
+function copyResult(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✓ Copiado');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('✓ Copiado');
+  });
+}
+</script>
+</body>
+</html>
